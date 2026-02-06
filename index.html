@@ -11,6 +11,13 @@
       <aside class="sidebar">
         <h1>30-Day Tracker</h1>
         <p class="sub">60+ problems • 3 languages</p>
+        <div class="user-switch">
+          <span class="user-label">Player</span>
+          <div class="user-tabs">
+            <button class="user-btn active" data-user="me" type="button">Me</button>
+            <button class="user-btn" data-user="sister" type="button">Sister</button>
+          </div>
+        </div>
         <div id="day-list" class="day-list"></div>
       </aside>
 
@@ -19,6 +26,22 @@
 
         <section class="progress">
           <h2>Progress</h2>
+          <div class="versus">
+            <div class="versus-row">
+              <span id="vs-me-label">Me</span>
+              <div class="bar">
+                <div id="vs-me-bar" class="fill"></div>
+              </div>
+              <span id="vs-me-text">0%</span>
+            </div>
+            <div class="versus-row">
+              <span id="vs-sister-label">Sister</span>
+              <div class="bar">
+                <div id="vs-sister-bar" class="fill"></div>
+              </div>
+              <span id="vs-sister-text">0%</span>
+            </div>
+          </div>
           <div class="progress-row">
             <span>Overall</span>
             <div class="bar">

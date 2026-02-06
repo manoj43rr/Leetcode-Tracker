@@ -3,6 +3,11 @@
 
   // Key used in localStorage so we can load/save reliably
   const STORAGE_KEY = "leetcode30_progress_v1";
+  const ACTIVE_USER_KEY = "leetcode30_active_user_v1";
+  const USERS = [
+    { id: "me", label: "Me" },
+    { id: "sister", label: "Sister" }
+  ];
 
   // The full 30-day roadmap (60+ problems) with default progress state
   const baseRoadmap = [
@@ -319,11 +324,13 @@
   }
 
   // The mutable app state (loaded from localStorage or initialized fresh)
-  let roadmap = loadProgress();
+  let activeUserId = loadActiveUser();
+  let roadmap = loadProgress(activeUserId);
   let currentDayIndex = 0;
 
   const dayListEl = document.querySelector("#day-list");
   const dayDetailsEl = document.querySelector("#day-details");
+  const userTabs = document.querySelectorAll(".user-btn");
 
   // Render the left list of days so a user can navigate quickly
   function renderDayList() {
@@ -429,6 +436,36 @@
 
   }
 
+  // Highlight the active user tab so it is obvious whose data is showing
+  function renderUserTabs() {
+    userTabs.forEach((btn) => {
+      const isActive = btn.dataset.user === activeUserId;
+      btn.classList.toggle("active", isActive);
+    });
+  }
+
+  // Switch between "Me" and "Sister" without mixing data
+  function handleUserSwitch(event) {
+    const target = event.target;
+    if (!target.classList.contains("user-btn")) {
+      return;
+    }
+
+    const nextUserId = target.dataset.user;
+    if (nextUserId === activeUserId) {
+      return;
+    }
+
+    activeUserId = nextUserId;
+    saveActiveUser(activeUserId);
+    roadmap = loadProgress(activeUserId);
+    currentDayIndex = 0;
+    renderUserTabs();
+    renderDayList();
+    renderDayDetails(currentDayIndex);
+    updateProgressUI();
+  }
+
   // Handle checkbox toggles and update state immediately
   function handleCheckboxChange(event) {
     const target = event.target;
@@ -469,13 +506,29 @@
 
   // Save progress safely using JSON so objects stay intact
   function saveProgress() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(roadmap));
+    const key = `${STORAGE_KEY}_${activeUserId}`;
+    localStorage.setItem(key, JSON.stringify(roadmap));
   }
 
   // Load progress if present; otherwise clone the base roadmap
-  function loadProgress() {
-    const raw = localStorage.getItem(STORAGE_KEY);
+  function loadProgress(userId) {
+    const key = `${STORAGE_KEY}_${userId}`;
+    const raw = localStorage.getItem(key);
     if (!raw) {
+      if (userId === "me") {
+        const legacy = localStorage.getItem(STORAGE_KEY);
+        if (legacy) {
+          try {
+            const parsedLegacy = JSON.parse(legacy);
+            if (Array.isArray(parsedLegacy) && parsedLegacy.length === baseRoadmap.length) {
+              localStorage.setItem(key, JSON.stringify(parsedLegacy));
+              return parsedLegacy;
+            }
+          } catch (error) {
+            // Ignore legacy data if it cannot be parsed
+          }
+        }
+      }
       return cloneRoadmap(baseRoadmap);
     }
 
@@ -491,15 +544,28 @@
     return cloneRoadmap(baseRoadmap);
   }
 
+  // Remember the last active user so reloads stay on the same player
+  function saveActiveUser(userId) {
+    localStorage.setItem(ACTIVE_USER_KEY, userId);
+  }
+
+  function loadActiveUser() {
+    const saved = localStorage.getItem(ACTIVE_USER_KEY);
+    if (saved && USERS.some((u) => u.id === saved)) {
+      return saved;
+    }
+    return "me";
+  }
+
   // Calculate overall and per-language progress for the progress bars
-  function calculateProgress() {
+  function calculateProgress(data) {
     let totalCheckboxes = 0;
     let totalSolved = 0;
     let pySolved = 0;
     let jsSolved = 0;
     let cppSolved = 0;
 
-    roadmap.forEach((day) => {
+    data.forEach((day) => {
       day.problems.forEach((problem) => {
         totalCheckboxes += 3;
         if (problem.solved.py) pySolved += 1;
@@ -518,9 +584,16 @@
     return { overallPercent, pyPercent, jsPercent, cppPercent };
   }
 
+  function loadOtherUserProgress(userId) {
+    return loadProgress(userId);
+  }
+
   // Update the progress bars whenever progress changes
   function updateProgressUI() {
-    const { overallPercent, pyPercent, jsPercent, cppPercent } = calculateProgress();
+    const { overallPercent, pyPercent, jsPercent, cppPercent } = calculateProgress(roadmap);
+    const otherUserId = activeUserId === "me" ? "sister" : "me";
+    const otherRoadmap = loadOtherUserProgress(otherUserId);
+    const otherProgress = calculateProgress(otherRoadmap);
 
     document.querySelector("#overall-bar").style.width = `${overallPercent}%`;
     document.querySelector("#overall-text").textContent = `${overallPercent}%`;
@@ -533,12 +606,30 @@
 
     document.querySelector("#cpp-bar").style.width = `${cppPercent}%`;
     document.querySelector("#cpp-text").textContent = `${cppPercent}%`;
+
+    const meLabel = document.querySelector("#vs-me-label");
+    const sisterLabel = document.querySelector("#vs-sister-label");
+    meLabel.textContent = "Me";
+    sisterLabel.textContent = "Sister";
+
+    const meProgress = activeUserId === "me" ? overallPercent : otherProgress.overallPercent;
+    const sisterProgress = activeUserId === "sister" ? overallPercent : otherProgress.overallPercent;
+
+    document.querySelector("#vs-me-bar").style.width = `${meProgress}%`;
+    document.querySelector("#vs-me-text").textContent = `${meProgress}%`;
+
+    document.querySelector("#vs-sister-bar").style.width = `${sisterProgress}%`;
+    document.querySelector("#vs-sister-text").textContent = `${sisterProgress}%`;
   }
 
   // Initial render so the app is ready on first load
   // Event delegation keeps listeners minimal and easy to understand
   dayDetailsEl.addEventListener("change", handleCheckboxChange);
   dayDetailsEl.addEventListener("input", handleNotesChange);
+  userTabs.forEach((btn) => {
+    btn.addEventListener("click", handleUserSwitch);
+  });
+  renderUserTabs();
   renderDayList();
   renderDayDetails(currentDayIndex);
   updateProgressUI();

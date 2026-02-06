@@ -55,6 +55,46 @@ body {
   font-size: 14px;
 }
 
+.user-switch {
+  margin-bottom: 18px;
+  padding: 10px;
+  background: #fbf6f0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.user-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.user-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.user-btn {
+  border: 1px solid var(--border);
+  background: #fffdfb;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.user-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border-color: var(--accent-2);
+  box-shadow: 0 6px 16px rgba(122, 47, 22, 0.2);
+}
+
 .day-list {
   display: grid;
   gap: 10px;
@@ -205,6 +245,23 @@ textarea:focus-visible {
 .progress h2 {
   margin: 0 0 12px;
   font-size: 18px;
+}
+
+.versus {
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  background: #fbf6f0;
+}
+
+.versus-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 60px;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 13px;
 }
 
 .progress-row {
